@@ -9,7 +9,6 @@ import {
   shouldTriggerAssessment,
   ConversationState,
 } from "@/lib/agent";
-import { retrieveTopCasesForAssessment } from "@/lib/supabase";
 import { buildPatientProfile, extractClinicalEntities } from "@/lib/bioner";
 
 export interface RetrievedCase {
@@ -151,6 +150,7 @@ export async function POST(req: NextRequest) {
       // Retrieve similar cases using the accumulated patient summary
       let cases: RetrievedCase[] = [];
       try {
+        const { retrieveTopCasesForAssessment } = await import("@/lib/supabase");
         cases = await retrieveTopCasesForAssessment(
           profile.query_summary || userText
         );

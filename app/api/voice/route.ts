@@ -9,7 +9,6 @@ import {
 } from "@/lib/agent";
 import { sendFeverisMessage } from "@/lib/claude";
 import { buildPatientProfile, extractClinicalEntities } from "@/lib/bioner";
-import { retrieveTopCasesForAssessment } from "@/lib/supabase";
 import type { RetrievedCase } from "@/lib/supabase";
 
 interface VapiMessage {
@@ -132,6 +131,7 @@ export async function POST(req: NextRequest) {
       const profile = await buildPatientProfile(session.history);
       let cases: RetrievedCase[] = [];
       try {
+        const { retrieveTopCasesForAssessment } = await import("@/lib/supabase");
         cases = await retrieveTopCasesForAssessment(profile.query_summary || userText);
       } catch (retrievalErr) {
         console.error("[Voice retrieval error]", retrievalErr);
