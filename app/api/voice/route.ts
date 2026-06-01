@@ -10,6 +10,7 @@ import {
 import { sendFeverisMessage } from "@/lib/claude";
 import { buildPatientProfile, extractClinicalEntities } from "@/lib/bioner";
 import { retrieveTopCasesForAssessment } from "@/lib/supabase";
+import type { RetrievedCase } from "@/lib/supabase";
 
 interface VapiMessage {
   role: "system" | "user" | "assistant" | "tool";
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
 
     if (triggerAssessment) {
       const profile = await buildPatientProfile(session.history);
-      let cases = [];
+      let cases: RetrievedCase[] = [];
       try {
         cases = await retrieveTopCasesForAssessment(profile.query_summary || userText);
       } catch (retrievalErr) {

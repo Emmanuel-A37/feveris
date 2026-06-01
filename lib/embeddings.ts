@@ -1,14 +1,22 @@
 // lib/embeddings.ts
-import { pipeline, env } from "@huggingface/transformers";
+import { env } from "@huggingface/transformers";
 
 env.allowRemoteModels = true;
 
-let embedPipeline: Awaited<ReturnType<typeof pipeline>> | null = null;
+type EmbeddingPipeline = (
+  input: string,
+  options?: Record<string, unknown>
+) => Promise<unknown>;
+
+let embedPipeline: EmbeddingPipeline | null = null;
 
 async function getEmbedder() {
   if (!embedPipeline) {
     console.log("[Embeddings] Loading Xenova/all-MiniLM-L6-v2...");
-    embedPipeline = await pipeline(
+    const transformers = await import("@huggingface/transformers");
+    const hfPipeline = (transformers as { pipeline: (...args: unknown[]) => Promise<EmbeddingPipeline> }).pipeline;
+
+    embedPipeline = await hfPipeline(
       "feature-extraction",
       "Xenova/all-MiniLM-L6-v2"
     );

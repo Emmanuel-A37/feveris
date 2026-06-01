@@ -117,15 +117,17 @@ async function streamFilterFebrile(filePath: string): Promise<FilteredCase[]> {
       highWaterMark: 64 * 1024, // 64KB chunks — memory efficient
     });
 
-    stream.on("data", (chunk: string) => {
+    stream.on("data", (chunk: string | Buffer) => {
+      const text = typeof chunk === "string" ? chunk : chunk.toString("utf8");
+
       // Stop reading if we already have enough cases
       if (filtered.length >= TARGET_FEBRILE_CASES) {
         stream.destroy();
         return;
       }
 
-      for (let i = 0; i < chunk.length; i++) {
-        const ch = chunk[i];
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
 
         // Track string boundaries so we don't mistake { inside strings for depth
         if (escape) {
