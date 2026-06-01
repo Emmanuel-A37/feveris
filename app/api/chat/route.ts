@@ -31,6 +31,31 @@ interface ClaudeMessage {
   content: string;
 }
 
+const FALLBACK_GREETING =
+  "I'm FEVERIS, your diagnostic reasoning assistant. What is your patient's chief complaint?";
+
+function fallbackReply(userText: string): string {
+  const lower = userText.toLowerCase();
+
+  if (/assess|differential|what do you think|your opinion|give me|diagnosis|enough information|ready|go ahead/.test(lower)) {
+    return "I can't generate the assessment right now because the model is unavailable. Please try again once the backend is configured.";
+  }
+
+  return "Noted. Please continue with the next clinically relevant detail about the patient's fever.";
+}
+
+async function safeSendFeverisMessage(
+  messages: ClaudeMessage[],
+  fallbackText: string
+): Promise<string> {
+  try {
+    return await sendFeverisMessage(messages);
+  } catch (err) {
+    console.error("[Chat model fallback]", err);
+    return fallbackText;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -58,13 +83,13 @@ export async function POST(req: NextRequest) {
 
     // ── Init call (empty history — produce greeting) ──────────────────────────
     if (isInit || !messages || messages.length === 0) {
-      const greeting = await sendFeverisMessage([
+      const greeting = await safeSendFeverisMessage([
         {
           role: "user",
           content:
             "Begin the consultation. Introduce yourself briefly and ask for the chief complaint. Do not repeat your introduction on subsequent turns.",
         },
-      ]);
+      ], FALLBACK_GREETING);
 
       return NextResponse.json({
         response: greeting,
@@ -106,13 +131,13 @@ export async function POST(req: NextRequest) {
 
     if (isRestartRequest(userText)) {
       const freshState = createSession(crypto.randomUUID());
-      const greeting = await sendFeverisMessage([
+      const greeting = await safeSendFeverisMessage([
         {
           role: "user",
           content:
             "Begin the consultation. Introduce yourself briefly and ask for the chief complaint. Do not repeat your introduction on subsequent turns.",
         },
-      ]);
+      ], FALLBACK_GREETING);
 
       return NextResponse.json({
         response: greeting,
@@ -183,14 +208,17 @@ export async function POST(req: NextRequest) {
         },
       ];
 
-      responseText = await sendFeverisMessage(augmentedMessages);
+      responseText = await safeSendFeverisMessage(
+        augmentedMessages,
+        fallbackReply(userText)
+      );
     }
 
     // ── Normal history-taking turn ───────────────────────────────────────────
     else {
       // Run NER in parallel with the LLM call — non-blocking
       const [text, ner] = await Promise.all([
-        sendFeverisMessage(validMessages),
+        safeSendFeverisMessage(validMessages, fallbackReply(userText)),
         extractClinicalEntities(userText).catch(() => null),
       ]);
 

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { Mic, Phone, PhoneOff } from "lucide-react";
-import { vapi, FEVERIS_ASSISTANT_CONFIG, getVoiceWebhookUrl } from "@/lib/vapi";
+import { FEVERIS_ASSISTANT_CONFIG, getVoiceWebhookUrl, getVapi } from "@/lib/vapi";
 
 interface VoiceToggleProps {
   onTranscript?: (text: string) => void;
@@ -25,10 +25,23 @@ export default function VoiceToggle({
     /^\/api\/voice$/i.test(url);
 
   const start = useCallback(async () => {
+    let vapi;
+
     if (!process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY) {
       setStatus("error");
       onAssistantResponse?.(
         "Voice is not configured: NEXT_PUBLIC_VAPI_PUBLIC_KEY is missing."
+      );
+      return;
+    }
+
+    try {
+      vapi = getVapi();
+    } catch (err) {
+      console.error("[VAPI init error]", err);
+      setStatus("error");
+      onAssistantResponse?.(
+        "Voice is not configured correctly. Check NEXT_PUBLIC_VAPI_PUBLIC_KEY in your deployment."
       );
       return;
     }
@@ -111,7 +124,11 @@ export default function VoiceToggle({
   }, [onTranscript, onAssistantResponse]);
 
   const stop = useCallback(() => {
-    vapi.stop();
+    try {
+      getVapi().stop();
+    } catch {
+      // If Vapi never initialized, stopping should still just reset UI state.
+    }
     setActive(false);
     setSpeaking(false);
     setStatus("idle");

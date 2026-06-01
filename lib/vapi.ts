@@ -2,10 +2,21 @@ import Vapi from "@vapi-ai/web";
 
 const vapiPublicKey = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
 
-export const vapi = new Vapi(vapiPublicKey ?? "");
+let vapiInstance: Vapi | null = null;
 
-// Guard against unhandled EventEmitter "error" events before UI listeners attach.
-vapi.on("error", () => {});
+export function getVapi(): Vapi {
+  if (!vapiPublicKey) {
+    throw new Error("NEXT_PUBLIC_VAPI_PUBLIC_KEY is missing.");
+  }
+
+  if (!vapiInstance) {
+    vapiInstance = new Vapi(vapiPublicKey);
+    // Guard against unhandled EventEmitter "error" events before UI listeners attach.
+    vapiInstance.on("error", () => {});
+  }
+
+  return vapiInstance;
+}
 
 export function getVoiceWebhookUrl(): string {
   const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
