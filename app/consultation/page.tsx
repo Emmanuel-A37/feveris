@@ -13,6 +13,16 @@ interface Message {
   isAssessment?: boolean;
 }
 
+async function readJsonResponse(res: Response) {
+  const text = await res.text();
+
+  try {
+    return { data: JSON.parse(text), rawText: text };
+  } catch {
+    return { data: null, rawText: text };
+  }
+}
+
 export default function ConsultationPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -44,19 +54,21 @@ export default function ConsultationPage() {
           isInit: true,        // flag so the route handles empty history
         }),
       });
-      const data = await res.json();
+      const { data, rawText } = await readJsonResponse(res);
       if (!res.ok) {
         setMessages([
           {
             role: "assistant",
-            content: data.error || "Failed to start consultation. Please retry.",
+            content:
+              data?.error ||
+              `Failed to start consultation. ${rawText ? "Received a server error page instead of JSON." : "Please retry."}`,
           },
         ]);
         return;
       }
       // Store ONLY the assistant greeting — no fake user message
-      setMessages([{ role: "assistant", content: data.response }]);
-      setSession((prev) => data.sessionState ?? prev);
+      setMessages([{ role: "assistant", content: data?.response ?? "" }]);
+      setSession((prev) => data?.sessionState ?? prev);
     } finally {
       setLoading(false);
     }
@@ -117,14 +129,16 @@ export default function ConsultationPage() {
         }),
       });
 
-      const data = await res.json();
+      const { data, rawText } = await readJsonResponse(res);
 
       if (!res.ok) {
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            content: data.error || "Something went wrong. Please try again.",
+            content:
+              data?.error ||
+              `Something went wrong. ${rawText ? "Received a server error page instead of JSON." : "Please try again."}`,
           },
         ]);
         return;
@@ -134,16 +148,16 @@ export default function ConsultationPage() {
         ...prev,
         {
           role: "assistant",
-          content: data.response,
-          isAssessment: data.isAssessment,
+          content: data?.response ?? "",
+          isAssessment: data?.isAssessment,
         },
       ]);
 
-      if (data.entities?.symptoms?.length) {
+      if (data?.entities?.symptoms?.length) {
         setSymptoms(prev => [...new Set([...prev, ...data.entities.symptoms])]);
       }
 
-      setSession((prev) => data.sessionState ?? prev);
+      setSession((prev) => data?.sessionState ?? prev);
     } finally {
       setLoading(false);
     }

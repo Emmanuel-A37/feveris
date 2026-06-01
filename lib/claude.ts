@@ -85,9 +85,22 @@ DISCLAIMER: Decision support only. Final clinical decisions rest with the treati
 // CLAUDE CLIENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+let anthropicClient: Anthropic | null = null;
+
+function getAnthropicClient(): Anthropic {
+  if (!anthropicClient) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "Missing ANTHROPIC_API_KEY. Add it to your Vercel environment variables or .env.local."
+      );
+    }
+
+    anthropicClient = new Anthropic({ apiKey });
+  }
+
+  return anthropicClient;
+}
 
 /**
  * Sends a multi-turn conversation to Claude claude-sonnet-4-6 and returns the
@@ -99,6 +112,8 @@ const anthropic = new Anthropic({
 export async function sendFeverisMessage(
   messages: Array<{ role: "user" | "assistant"; content: string }>
 ): Promise<string> {
+  const anthropic = getAnthropicClient();
+
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 1024,
