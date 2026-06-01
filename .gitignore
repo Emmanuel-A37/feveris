@@ -35,7 +35,11 @@ yarn-error.log*
 
 # vercel
 .vercel
-
+.md
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+data/raw/
+data/processed/
+data/chroma_db/

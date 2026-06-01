@@ -9,9 +9,20 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
+    "@google/generative-ai": "^0.24.1",
+    "@huggingface/transformers": "^3.8.1",
+    "@supabase/supabase-js": "^2.99.3",
+    "@tailwindcss/typography": "^0.5.19",
+    "@vapi-ai/web": "^2.5.2",
+    "chromadb": "^3.4.0",
+    "dotenv": "^17.3.1",
+    "groq-sdk": "^1.1.1",
+    "lucide-react": "^0.577.0",
     "next": "16.2.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -21,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
