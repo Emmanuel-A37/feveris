@@ -204,6 +204,8 @@ export default function ConsultationPage() {
           <VoiceToggle
             onTranscript={handleVoiceTranscript}
             onAssistantResponse={handleAssistantVoiceResponse}
+            messages={messages}
+            sessionState={session}
           />
         </div>
       </aside>
