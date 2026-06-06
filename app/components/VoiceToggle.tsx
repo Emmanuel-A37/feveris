@@ -12,7 +12,9 @@ interface Message {
 
 interface VoiceToggleProps {
   onTranscript?: (text: string) => void;
-  onAssistantResponse?: (text: string) => void;
+  onAssistantResponse?: (text: string, isAssessment?: boolean) => void;
+  onSessionStateChange?: (state: any) => void;
+  onSymptomsExtracted?: (symptoms: string[]) => void;
   /** Full conversation history — needed for context-aware FEVERIS responses */
   messages?: Message[];
   /** Current agent session state — forwarded to /api/chat */
@@ -22,6 +24,8 @@ interface VoiceToggleProps {
 export default function VoiceToggle({
   onTranscript,
   onAssistantResponse,
+  onSessionStateChange,
+  onSymptomsExtracted,
   messages = [],
   sessionState,
 }: VoiceToggleProps) {
@@ -57,36 +61,39 @@ export default function VoiceToggle({
     mediaRecorderRef.current = null;
     streamRef.current = null;
     dgConnectionRef.current = null;
+    processingRef.current = false;
   }
 
-  const speak = useCallback(async (text: string) => {
-    onAssistantResponse?.(text);
-    setSpeaking(true);
-    try {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) { setSpeaking(false); return; }
+  const speak = useCallback((text: string) => {
+    return new Promise<void>(async (resolve) => {
+      setSpeaking(true);
+      try {
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        if (!res.ok) { setSpeaking(false); resolve(); return; }
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
 
-      if (audioRef.current) {
-        audioRef.current.pause();
-        URL.revokeObjectURL(audioRef.current.src);
+        if (audioRef.current) {
+          audioRef.current.pause();
+          URL.revokeObjectURL(audioRef.current.src);
+        }
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => { setSpeaking(false); URL.revokeObjectURL(url); resolve(); };
+        audio.onerror = () => { setSpeaking(false); resolve(); };
+        await audio.play();
+      } catch (err) {
+        console.error("[TTS error]", err);
+        setSpeaking(false);
+        resolve();
       }
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audio.onended = () => { setSpeaking(false); URL.revokeObjectURL(url); };
-      audio.onerror = () => setSpeaking(false);
-      await audio.play();
-    } catch (err) {
-      console.error("[TTS error]", err);
-      setSpeaking(false);
-    }
-  }, [onAssistantResponse]);
+    });
+  }, []);
 
   const handleFinalTranscript = useCallback(async (transcript: string) => {
     if (!transcript.trim() || processingRef.current) return;
@@ -111,15 +118,26 @@ export default function VoiceToggle({
       });
 
       const json = await res.json().catch(() => ({}));
+      
+      if (json.sessionState) {
+        onSessionStateChange?.(json.sessionState);
+      }
+      if (json.entities?.symptoms?.length) {
+        onSymptomsExtracted?.(json.entities.symptoms);
+      }
+
       const reply: string = json.response ?? json.message ?? "";
-      if (reply.trim()) await speak(reply);
+      if (reply.trim()) {
+        onAssistantResponse?.(reply, json.isAssessment);
+        await speak(reply);
+      }
     } catch (err) {
       console.error("[Voice chat error]", err);
     } finally {
       processingRef.current = false;
       setStatus("listening");
     }
-  }, [onTranscript, speak]);
+  }, [onTranscript, speak, onSessionStateChange, onSymptomsExtracted]);
 
   const start = useCallback(async () => {
     const apiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY;
@@ -149,7 +167,7 @@ export default function VoiceToggle({
         language: "en",
         smart_format: true,       // Back to boolean
         interim_results: true,    // Back to boolean
-        utterance_end_ms: 1500,   // Back to number
+        utterance_end_ms: 2000,   // Back to number
         keywords: [
           "malaria:2", "dengue:2", "typhoid:2", "febrile:2",
           "rigors:2", "sepsis:2", "pyrexia:2", "splenomegaly:2",

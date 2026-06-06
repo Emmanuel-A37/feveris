@@ -1,7 +1,7 @@
 // app/consultation/page.tsx
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Activity } from "lucide-react";
+import { Send, Activity, RotateCcw } from "lucide-react";
 import { createSession, ConversationState } from "@/lib/agent";
 import DiagnosticOutput from "../components/DiagnosticOutput";
 import VoiceToggle from "../components/VoiceToggle";
@@ -39,9 +39,10 @@ export default function ConsultationPage() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const init = useCallback(async () => {
+  const init = useCallback(async (freshSession?: ConversationState) => {
     setLoading(true);
     try {
+      const activeSession = freshSession || session;
       // Send an empty messages array — Claude will follow the system prompt
       // and produce the greeting on its own. We do NOT send "START_CONSULTATION"
       // into the history because that string would persist across all turns.
@@ -50,7 +51,7 @@ export default function ConsultationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [],
-          sessionState: session,
+          sessionState: activeSession,
           isInit: true,        // flag so the route handles empty history
         }),
       });
@@ -167,13 +168,27 @@ export default function ConsultationPage() {
     setMessages((prev) => [...prev, { role: "user", content: text }]);
   }, []);
 
-  const handleAssistantVoiceResponse = useCallback((text: string) => {
+  const handleAssistantVoiceResponse = useCallback((text: string, isAssessment?: boolean) => {
     setMessages((prev) => {
       const last = prev[prev.length - 1];
       if (last?.role === "assistant" && last.content === text) return prev;
-      return [...prev, { role: "assistant", content: text }];
+      return [...prev, { role: "assistant", content: text, isAssessment }];
     });
   }, []);
+
+  const handleRestart = useCallback(async () => {
+    if (loading) return;
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      // ignore storage errors
+    }
+    const freshSession = createSession(crypto.randomUUID());
+    setSession(freshSession);
+    setSymptoms([]);
+    setMessages([]);
+    await init(freshSession);
+  }, [init, loading]);
 
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100 font-mono">
@@ -200,10 +215,20 @@ export default function ConsultationPage() {
             Turn {session?.turnCount ?? 0} / 6<br />{session?.agentState ?? "GREETING"}
           </p>
         </div>
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-col gap-2">
+          <button
+            onClick={handleRestart}
+            disabled={loading}
+            className="flex items-center gap-2 justify-center text-xs px-3 py-2 rounded-lg bg-gray-900 border border-gray-800 hover:bg-gray-800 text-gray-300 transition-all cursor-pointer disabled:opacity-40"
+            type="button"
+          >
+            <RotateCcw size={13} /> Reset Consultation
+          </button>
           <VoiceToggle
             onTranscript={handleVoiceTranscript}
             onAssistantResponse={handleAssistantVoiceResponse}
+            onSessionStateChange={setSession}
+            onSymptomsExtracted={(s) => setSymptoms((prev) => [...new Set([...prev, ...s])])}
             messages={messages}
             sessionState={session}
           />
