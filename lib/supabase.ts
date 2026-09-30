@@ -11,7 +11,6 @@
  *
  * Imported by:
  *   - app/api/chat/route.ts        (called when assessment triggers)
- *   - app/api/retrieval/route.ts   (direct retrieval endpoint)
  *
  * NOTE: This file uses a path alias (@/lib/embeddings) not a relative path.
  *       Ensure tsconfig.json has:
@@ -21,6 +20,7 @@
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getEmbedding } from "@/lib/embeddings";
+import { performance } from "node:perf_hooks";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CLIENT SINGLETON — anon key for reads, safe in API routes
@@ -98,13 +98,23 @@ export async function retrieveSimilarCases(
   matchThreshold = 0.3
 ): Promise<RetrievedCase[]> {
   const supabase = getSupabase();
-  const queryEmbedding = await getEmbedding(query);
 
+  const embedStart = performance.now();
+  const queryEmbedding = await getEmbedding(query);
+  const embedMs = Math.round(performance.now() - embedStart);
+
+  const rpcStart = performance.now();
   const { data, error } = await supabase.rpc("match_feveris_cases", {
     query_embedding: queryEmbedding,
     match_threshold: matchThreshold,
     match_count: nResults,
   });
+  const rpcMs = Math.round(performance.now() - rpcStart);
+
+  console.log(
+    `[Retrieval timing] embed=${embedMs}ms rpc=${rpcMs}ms ` +
+    `error=${error ? error.message : "none"} results=${data?.length ?? 0}`
+  );
 
   if (error) {
     throw new Error(

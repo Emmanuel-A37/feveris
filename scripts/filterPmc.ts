@@ -16,7 +16,6 @@
  */
 
 import { createReadStream, writeFileSync, mkdirSync, existsSync } from "fs";
-import { createInterface } from "readline";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONFIGURATION

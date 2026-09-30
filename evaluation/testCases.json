@@ -1,0 +1,262 @@
+[
+  {
+    "id": "TC001",
+    "disease": "Malaria (P. falciparum)",
+    "clinician_responses": [
+      "High fever and rigors for 4 days",
+      "40-year-old male, returned from Nigeria 1 week ago",
+      "Intermittent fever with chills, temperature 39.8 Celsius",
+      "Headache and fatigue, mild splenomegaly on exam, no rash",
+      "Not on malaria prophylaxis, no prior malaria"
+    ],
+    "expected_top_1": "malaria",
+    "expected_confirmatory_test": "blood smear"
+  },
+  {
+    "id": "TC002",
+    "disease": "Dengue Fever",
+    "clinician_responses": [
+      "Severe headache and fever for 3 days",
+      "28-year-old female, traveled to Bangkok last week",
+      "Retro-orbital pain and myalgia, temperature 38.9",
+      "Petechial rash today, platelets possibly low",
+      "No prior similar illness, no prophylaxis taken"
+    ],
+    "expected_top_1": "dengue",
+    "expected_confirmatory_test": "ns1 antigen"
+  },
+  {
+    "id": "TC003",
+    "disease": "Typhoid Fever",
+    "clinician_responses": [
+      "Prolonged fever about 10 days now, worsening daily",
+      "22-year-old male from Pakistan visiting family",
+      "Step-ladder fever pattern, up to 40 degrees Celsius",
+      "Abdominal pain, constipation then diarrhoea, rose spots on trunk",
+      "Ate street food throughout trip, unvaccinated for typhoid"
+    ],
+    "expected_top_1": "typhoid",
+    "expected_confirmatory_test": "blood culture"
+  },
+  {
+    "id": "TC004",
+    "disease": "Malaria (P. vivax)",
+    "clinician_responses": [
+      "Fever and chills recurring every 48 hours for a week",
+      "35-year-old female, traveled to rural India 3 weeks ago",
+      "Paroxysms of high fever followed by profuse sweating",
+      "Spleen is palpable, sclerae show mild icterus",
+      "Had malaria vivax 2 years ago, no current prophylaxis"
+    ],
+    "expected_top_1": "malaria",
+    "expected_confirmatory_test": "blood smear"
+  },
+  {
+    "id": "TC005",
+    "disease": "Visceral Leishmaniasis",
+    "clinician_responses": [
+      "Low-grade fever and progressive abdominal swelling for 2 months",
+      "14-year-old boy from rural Bihar, India",
+      "Marked weight loss, severe fatigue, pallor",
+      "Massive splenomegaly and hepatomegaly, no skin lesions",
+      "Lives in mud-brick house, sandfly bites reported in area"
+    ],
+    "expected_top_1": "leishmaniasis",
+    "expected_confirmatory_test": "rk39"
+  },
+  {
+    "id": "TC006",
+    "disease": "African Trypanosomiasis",
+    "clinician_responses": [
+      "Irregular fever and painful node on the neck for 3 weeks",
+      "31-year-old male park ranger from Uganda",
+      "Chancre at the site of a tsetse fly bite on the arm",
+      "Winterbottom's sign present, daytime somnolence and insomnia",
+      "Works daily in wooded savannah regions"
+    ],
+    "expected_top_1": "trypanosomiasis",
+    "expected_confirmatory_test": "blood smear"
+  },
+  {
+    "id": "TC007",
+    "disease": "Chikungunya",
+    "clinician_responses": [
+      "Acute onset of high fever and severe joint pain for 2 days",
+      "45-year-old female resident of Mombasa, Kenya",
+      "Fever 39.2, excruciating pain in wrists, ankles, and small joints",
+      "Contorted posture due to joint pain, maculopapular rash on trunk",
+      "Aedes mosquito bites noted around home"
+    ],
+    "expected_top_1": "chikungunya",
+    "expected_confirmatory_test": "pcr"
+  },
+  {
+    "id": "TC008",
+    "disease": "Yellow Fever",
+    "clinician_responses": [
+      "Sudden high fever, backache, and vomiting for 4 days",
+      "29-year-old male traveler returned from rural Brazil",
+      "Fever resolved for 24 hours then returned, now with jaundice",
+      "Scleral icterus, bleeding from gums, oliguria, Faget's sign",
+      "Unvaccinated for yellow fever, traveled to forested areas"
+    ],
+    "expected_top_1": "yellow fever",
+    "expected_confirmatory_test": "pcr"
+  },
+  {
+    "id": "TC009",
+    "disease": "Zika Virus",
+    "clinician_responses": [
+      "Mild fever, joint pain, and red eyes for 3 days",
+      "26-year-old pregnant female, returned from Colombia 5 days ago",
+      "Temperature 37.9, bilateral non-purulent conjunctivitis",
+      "Pruritic maculopapular rash starting on face, mild arthralgia",
+      "First trimester of pregnancy, worried about microcephaly"
+    ],
+    "expected_top_1": "zika",
+    "expected_confirmatory_test": "pcr"
+  },
+  {
+    "id": "TC010",
+    "disease": "Bacterial Sepsis",
+    "clinician_responses": [
+      "Fever, severe chills, and confusion for 1 day",
+      "68-year-old female, history of recent urinary tract infection",
+      "Hypotension BP 85/50, heart rate 115, temperature 39.4",
+      "Altered mental status, tachypnea, cold clammy extremities",
+      "History of diabetes mellitus, not on antibiotics"
+    ],
+    "expected_top_1": "sepsis",
+    "expected_confirmatory_test": "blood culture"
+  },
+  {
+    "id": "TC011",
+    "disease": "Leptospirosis",
+    "clinician_responses": [
+      "High fever, severe calf pain, and headache for 5 days",
+      "33-year-old male farmer from rural Vietnam",
+      "Conjunctival suffusion without discharge, muscle tenderness",
+      "Jaundice, mild hematuria, history of wading in floodwaters",
+      "Exposed to rodents on the farm, no prior vaccination"
+    ],
+    "expected_top_1": "leptospirosis",
+    "expected_confirmatory_test": "microscopic agglutination"
+  },
+  {
+    "id": "TC012",
+    "disease": "Brucellosis",
+    "clinician_responses": [
+      "Undulant fever, night sweats, and back pain for 3 weeks",
+      "50-year-old male dairy farm worker from Greece",
+      "Fever peaks in the evening, profuse foul-smelling sweat",
+      "Sacroiliitis, hepatosplenomegaly, mild lymphadenopathy",
+      "Consumed unpasteurized goat cheese, chronic joint symptoms"
+    ],
+    "expected_top_1": "brucellosis",
+    "expected_confirmatory_test": "blood culture"
+  },
+  {
+    "id": "TC013",
+    "disease": "Rickettsia (Scrub Typhus)",
+    "clinician_responses": [
+      "Fever, headache, and a dark sore on the hip for 6 days",
+      "38-year-old female trekker returned from northern Thailand",
+      "Fever 39.0, severe generalized lymphadenopathy, maculopapular rash",
+      "Black eschar with erythematous halo on the hip, splenomegaly",
+      "Walked through tall grass and brush in rural areas"
+    ],
+    "expected_top_1": "rickettsia",
+    "expected_confirmatory_test": "pcr"
+  },
+  {
+    "id": "TC014",
+    "disease": "Bacterial Meningitis",
+    "clinician_responses": [
+      "Acute onset of high fever, headache, and neck stiffness",
+      "19-year-old male college student living in a dormitory",
+      "Fever 39.5, positive Brudzinski and Kernig signs, photophobia",
+      "Petechial rash on lower extremities, altered consciousness",
+      "Unvaccinated for meningococcus, symptoms evolved in 12 hours"
+    ],
+    "expected_top_1": "meningitis",
+    "expected_confirmatory_test": "lumbar puncture"
+  },
+  {
+    "id": "TC015",
+    "disease": "Influenza",
+    "clinician_responses": [
+      "Sudden fever, dry cough, and severe muscle aches",
+      "7-year-old female, school classmate recently diagnosed",
+      "Fever 39.1, sore throat, rhinorrhea, headache, myalgia",
+      "Lungs clear on auscultation, no travel history, no rash",
+      "Unvaccinated for the current season, sick for 36 hours"
+    ],
+    "expected_top_1": "influenza",
+    "expected_confirmatory_test": "nasopharyngeal swab"
+  },
+  {
+    "id": "TC016",
+    "disease": "Viral Haemorrhagic Fever (Lassa)",
+    "clinician_responses": [
+      "Gradual onset of fever, sore throat, and facial swelling for 6 days",
+      "32-year-old female from rural Sierra Leone",
+      "Fever 38.8, retrosternal chest pain, conjunctival injection",
+      "Facial edema, mucosal bleeding, proteinuria on dipstick",
+      "Rodents (Mastomys) seen in food storage area at home"
+    ],
+    "expected_top_1": "haemorrhagic fever",
+    "expected_confirmatory_test": "pcr"
+  },
+  {
+    "id": "TC017",
+    "disease": "COVID-19",
+    "clinician_responses": [
+      "Fever, cough, and loss of taste and smell for 3 days",
+      "55-year-old male with hypertension",
+      "Fever 38.3, mild dyspnea, oxygen saturation 94% on room air",
+      "Dry cough, fatigue, household contact positive for SARS-CoV-2",
+      "Received 2 vaccine doses, last dose 1 year ago"
+    ],
+    "expected_top_1": "covid",
+    "expected_confirmatory_test": "pcr"
+  },
+  {
+    "id": "TC018",
+    "disease": "Tuberculosis (miliary/disseminated)",
+    "clinician_responses": [
+      "Chronic low-grade fever, night sweats, and weight loss for 6 weeks",
+      "24-year-old female from South Africa, HIV positive",
+      "Fever spikes in evenings, dry cough, progressive cachexia",
+      "Diffuse rales on chest exam, hepatosplenomegaly, lymphadenopathy",
+      "Non-compliant with antiretroviral therapy, history of contact with TB"
+    ],
+    "expected_top_1": "tuberculosis",
+    "expected_confirmatory_test": "sputum smear"
+  },
+  {
+    "id": "TC019",
+    "disease": "Infective Endocarditis",
+    "clinician_responses": [
+      "Persistent low-grade fever and fatigue for 3 weeks",
+      "42-year-old male with history of intravenous drug use",
+      "Fever 38.1, new holosystolic murmur at the apex",
+      "Splinter hemorrhages on nails, Janeway lesions on palms",
+      "Recent dental extraction without antibiotic prophylaxis"
+    ],
+    "expected_top_1": "endocarditis",
+    "expected_confirmatory_test": "echocardiogram"
+  },
+  {
+    "id": "TC020",
+    "disease": "Bacterial Sepsis (alternative presentation)",
+    "clinician_responses": [
+      "High fever, respiratory distress, and chills for 1 day",
+      "62-year-old male status post splenectomy",
+      "BP 90/60, HR 120, RR 26, temperature 39.9 Celsius",
+      "Severe fatigue, purpuric skin lesions, no focal lung findings",
+      "Surgical splenectomy 5 years ago for trauma, skipped vaccine boosters"
+    ],
+    "expected_top_1": "sepsis",
+    "expected_confirmatory_test": "blood culture"
+  }
+]

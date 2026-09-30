@@ -32,13 +32,6 @@ env.allowRemoteModels = true;
 const INPUT_PATH = "data/processed/case_chunks.json";
 
 /**
- * How many cases to embed and insert per batch.
- * Keep this low (25–50) to avoid Supabase's request size limits
- * and to give you recoverable checkpoints if something fails mid-run.
- */
-const BATCH_SIZE = 25;
-
-/**
  * Minimum cosine similarity for a retrieved result to be considered relevant.
  * Used in the verification test at the end of the script.
  */
@@ -60,19 +53,6 @@ interface CaseChunk {
   title?: string;
   age_text?: string;
   gender_text?: string;
-}
-
-interface SupabaseRow {
-  patient_uid: string;
-  pmid: string;
-  title: string;
-  age_text: string;
-  gender_text: string;
-  document: string;
-  diagnosis: string;
-  presenting_complaint: string;
-  source: string;
-  embedding: number[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -128,10 +108,9 @@ Find these in: Supabase Dashboard → Settings → API
   }
 
   // ── Step 5: Embed and insert in batches ────────────────────────────────────
- // Replace the batch loop and everything after it with this
 
-const BATCH_SIZE = 10;        // down from 25
-const DELAY_MS = 2000;        // 1 second between batches
+const BATCH_SIZE = 10;
+const DELAY_MS = 2000;        // 2 seconds between batches — gives Supabase breathing room
 const MAX_RETRIES = 3;        // retry transient failures
 
 async function sleep(ms: number) {

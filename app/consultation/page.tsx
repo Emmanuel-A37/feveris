@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Activity, RotateCcw } from "lucide-react";
 import { createSession, ConversationState } from "@/lib/agent";
+import { consumeChatStream } from "@/lib/chatStream";
 import DiagnosticOutput from "../components/DiagnosticOutput";
 import VoiceToggle from "../components/VoiceToggle";
 
@@ -13,15 +14,6 @@ interface Message {
   isAssessment?: boolean;
 }
 
-async function readJsonResponse(res: Response) {
-  const text = await res.text();
-
-  try {
-    return { data: JSON.parse(text), rawText: text };
-  } catch {
-    return { data: null, rawText: text };
-  }
-}
 
 export default function ConsultationPage() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -53,23 +45,41 @@ export default function ConsultationPage() {
           messages: [],
           sessionState: activeSession,
           isInit: true,        // flag so the route handles empty history
+          stream: true,
         }),
       });
-      const { data, rawText } = await readJsonResponse(res);
-      if (!res.ok) {
+
+      if (!res.ok || !res.body) {
         setMessages([
-          {
-            role: "assistant",
-            content:
-              data?.error ||
-              `Failed to start consultation. ${rawText ? "Received a server error page instead of JSON." : "Please retry."}`,
-          },
+          { role: "assistant", content: "Failed to start consultation. Please retry." },
         ]);
         return;
       }
-      // Store ONLY the assistant greeting — no fake user message
-      setMessages([{ role: "assistant", content: data?.response ?? "" }]);
-      setSession((prev) => data?.sessionState ?? prev);
+
+      // Placeholder assistant message — text deltas get appended into it as
+      // they stream in, so the greeting appears incrementally.
+      setMessages([{ role: "assistant", content: "" }]);
+
+      const finalEvent = await consumeChatStream(
+        res,
+        (deltaText) => {
+          setMessages((prev) => {
+            const next = [...prev];
+            next[next.length - 1] = { ...next[next.length - 1], content: next[next.length - 1].content + deltaText };
+            return next;
+          });
+        },
+        () => {} // init never spontaneously assesses
+      );
+
+      if (finalEvent?.type === "error") {
+        setMessages([{ role: "assistant", content: finalEvent.message || "Failed to start consultation." }]);
+        return;
+      }
+
+      if (finalEvent?.sessionState) {
+        setSession(finalEvent.sessionState);
+      }
     } finally {
       setLoading(false);
     }
@@ -127,38 +137,73 @@ export default function ConsultationPage() {
         body: JSON.stringify({
           messages: history,
           sessionState: session,
+          stream: true,
         }),
       });
 
-      const { data, rawText } = await readJsonResponse(res);
-
-      if (!res.ok) {
+      if (!res.ok || !res.body) {
         setMessages((prev) => [
           ...prev,
-          {
-            role: "assistant",
-            content:
-              data?.error ||
-              `Something went wrong. ${rawText ? "Received a server error page instead of JSON." : "Please try again."}`,
-          },
+          { role: "assistant", content: "Something went wrong. Please try again." },
         ]);
         return;
       }
 
-      setMessages(prev => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data?.response ?? "",
-          isAssessment: data?.isAssessment,
-        },
-      ]);
+      // Placeholder assistant message — text deltas get appended into it.
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-      if (data?.entities?.symptoms?.length) {
-        setSymptoms(prev => [...new Set([...prev, ...data.entities.symptoms])]);
+      const finalEvent = await consumeChatStream(
+        res,
+        (deltaText) => {
+          setMessages((prev) => {
+            const next = [...prev];
+            const last = next[next.length - 1];
+            next[next.length - 1] = { ...last, content: last.content + deltaText };
+            return next;
+          });
+        },
+        () => {
+          // Server discarded an ungrounded spontaneous assessment and is
+          // regenerating a retrieval-grounded one — clear the placeholder so
+          // the grounded version streams in cleanly instead of appending
+          // after whatever text had already arrived.
+          setMessages((prev) => {
+            const next = [...prev];
+            next[next.length - 1] = { ...next[next.length - 1], content: "" };
+            return next;
+          });
+        }
+      );
+
+      if (finalEvent?.type === "error") {
+        setMessages((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = { role: "assistant", content: finalEvent.message || "Something went wrong." };
+          return next;
+        });
+        return;
       }
 
-      setSession((prev) => data?.sessionState ?? prev);
+      if (finalEvent) {
+        setMessages((prev) => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          next[next.length - 1] = {
+            role: "assistant",
+            content: finalEvent.response ?? last.content,
+            isAssessment: finalEvent.isAssessment,
+          };
+          return next;
+        });
+
+        if (finalEvent.entities?.symptoms?.length) {
+          setSymptoms(prev => [...new Set([...prev, ...finalEvent.entities!.symptoms!])]);
+        }
+
+        if (finalEvent.sessionState) {
+          setSession(finalEvent.sessionState);
+        }
+      }
     } finally {
       setLoading(false);
     }
