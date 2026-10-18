@@ -48,9 +48,9 @@ npm run eval                     # terminal 2: all 20 cases in evaluation/testCa
 npx tsx evaluation/runEval.ts --case=TC001 --verbose   # single case with transcript
 ```
 
-Metrics are printed by `evaluation/runEval.ts`: Top-1 as the script labels it (expected string appears anywhere in the assessment text, case-insensitive), Top-3 (expected string appears in one of the three parsed differential names), Test Mentioned, Format OK, retrieval relevance, latency. Run logs are written to `evaluation/results/` (git-ignored). Note that the script's "Top-1" is a whole-text check (95% in our run). The paper's Top-1 is the first listed differential, which was 85%, and that is the headline figure.
+Metrics are printed by `evaluation/runEval.ts`: Top-1 as the script labels it (expected string appears anywhere in the assessment text, case-insensitive), Top-3 (expected string appears in one of the three parsed differential names), Test Mentioned, Format OK, retrieval relevance, latency. Run logs are written to `evaluation/results/` (git-ignored). Note that the script's "Top-1" is a whole-text check (95% in our run). The paper's Top-1 is the first-differential figure (85%), produced from a saved run log by `npx tsx evaluation/rescore.ts`.
 
-**Expected cost and runtime (estimate):** the logged run took ~15.5 minutes wall-clock (20 cases, ~46 s/case, 120 measured Claude calls, mean 5.5 s per call) because cases run sequentially. Token usage was not logged; assuming ~10k input and ~2k output tokens per case at Sonnet-class pricing this is on the order of **$1–2 per 20-case run**. This is an estimate and was not measured. BioNER and Supabase usage fit free tiers. Runs are not deterministic (temperature 0.3).
+**Expected cost and runtime (estimate):** the logged run took ~15.5 minutes wall-clock (20 cases, 120 measured Claude calls, mean 5.5 s per call) because cases run sequentially. Token usage was not logged. Assuming ~10k input and ~2k output tokens per case at Sonnet-class pricing, this is on the order of **$1–2 per 20-case run**. This is an estimate and was not measured. BioNER and Supabase usage fit free tiers. Runs are not deterministic (temperature 0.3).
 
 ## Known limitations
 
@@ -59,9 +59,9 @@ These come from what the code and logs show.
 - **Scripted, synthetic test set.** 20 author-written cases, one per disease (two sepsis), five scripted clinician turns each. These are not real patients, and the cases were not written independently of the system's design.
 - **Retrieval adds little measurable value so far.** Retrieved cases were exact-match relevant in only 3 of 60 slots in the last run, and many corpus records have an empty or noisy regex-extracted diagnosis field. There is no no-retrieval ablation in this repo yet.
 - **Corpus is a biased sample.** It is the first ~3,000 keyword-matching records in file order, with no random or stratified sampling.
-- **Possible label leakage.** In four cases (TC001, TC003, TC004, TC008) the scripted history itself names the target disease (e.g. "no prior malaria", "unvaccinated for yellow fever"); BioNER's "Conditions" slot feeds the retrieval query.
-- **Weak negation and entity handling.** Negation is a 45-character window regex; BioNER fragments some terms and the exposure-context slot admits noise words.
-- **Latency.** End-to-end case time is ~46 s; the reported generation latency covers only the Claude API call, not BioNER, retrieval, STT, or TTS.
+- **Possible label leakage.** In four cases (TC001, TC003, TC004, TC008) the scripted history itself names the target disease (e.g. "no prior malaria", "unvaccinated for yellow fever"). BioNER's "Conditions" slot feeds the retrieval query.
+- **Weak negation and entity handling.** Negation is a 45-character window regex. BioNER fragments some terms, and the exposure-context slot admits noise words.
+- **Latency.** Two figures are reported. Mean generation latency (5.5 s per call) times only the Claude API call. End-to-end case time (about 35–45 s for a scripted five-turn conversation) also includes BioNER, retrieval, and request overhead. Neither figure includes speech recognition or synthesis, because the evaluation harness sends typed text.
 - **Voice path.** It was checked with unit-level tests of the reconnect and sentence logic, plus the author's own end-to-end trials with a real microphone and network. It has not been tested with other users or devices. The browser Deepgram key is exposed client-side in this prototype.
 - **Single model, single run.** No confidence intervals, no repeated runs, no comparison against other LLMs or clinicians.
 
