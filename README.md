@@ -1,11 +1,11 @@
 # FEVERIS
 
-> ##  Research prototype — not for clinical use
-> FEVERIS is an academic research prototype. It has **not** been validated on real patients, is **not** a medical device, and must **not** be used to diagnose, treat, or make decisions about any real person. Its outputs can be wrong, including confidently wrong. All evaluation here uses short, author-written, synthetic case scripts.
+> ## Research prototype, not for clinical use
+> FEVERIS is an academic research prototype. It has **not** been validated on real patients, is **not** a medical device, and must **not** be used to diagnose, treat, or make decisions about any real person. Its outputs can be wrong, sometimes with great confidence. All evaluation here uses short, author-written, synthetic case scripts.
 
 **FEVERIS** (Febrile Evidence-based Voice Enhanced Reasoning and Inference System) is a voice-enabled decision-support prototype for febrile illness. A clinician describes a patient turn by turn (typed or spoken); the system asks follow-up questions and, on request or after enough turns, produces a ranked three-item differential diagnosis grounded in similar published case reports.
 
-## Architecture in five lines
+## Architecture
 
 1. **Next.js app** (`app/consultation`) hosts a chat UI with an optional voice mode (Deepgram `nova-2-medical` streaming STT in the browser; Deepgram Aura or ElevenLabs TTS via `/api/tts`).
 2. **`/api/chat`** drives a small state machine (`lib/agent.ts`) and calls Claude (`claude-sonnet-4-6`, temperature 0.3, system prompt in `lib/claude.ts`).
@@ -34,9 +34,9 @@ npm run dev                     # http://localhost:3000
 The retrieval corpus is derived from **PMC-Patients-V2** (Zhao et al.), which is distributed under **CC BY-NC-SA 4.0** (non-commercial, share-alike, attribution). Because that does not clearly permit redistributing it inside this repository, neither the raw dataset nor the processed chunks are included. Rebuild them yourself from the public dataset:
 
 1. Download `PMC-Patients-V2.json` from <https://huggingface.co/datasets/zhengyun21/PMC-Patients-V2> (free HuggingFace account may be required) to `data/raw/PMC-Patients-V2.json` (~840 MB).
-2. `npm run corpus:filter` — keeps the first 3,000+ records (file order; in our run 3,004) whose text is ≥ 200 characters and contains any of the **26 febrile keyword filters** listed in `scripts/filterPmc.ts` → `data/raw/febrile_cases.json`.
-3. `npm run corpus:chunk` — builds one retrieval chunk per filtered case (age/sex, first two sentences, first 1,000 characters of narrative, regex-extracted diagnosis) → `data/processed/case_chunks.json`.
-4. `npm run corpus:embed` — embeds every chunk with all-MiniLM-L6-v2 and upserts into Supabase (`SUPABASE_SERVICE_ROLE_KEY` required; resumable).
+2. `npm run corpus:filter` keeps the first 3,000+ records (file order; in our run 3,004) whose text is ≥ 200 characters and contains any of the **26 febrile keyword filters** listed in `scripts/filterPmc.ts`, and writes `data/raw/febrile_cases.json`.
+3. `npm run corpus:chunk` builds one retrieval chunk per filtered case (age/sex, first two sentences, first 1,000 characters of narrative, regex-extracted diagnosis), and writes `data/processed/case_chunks.json`.
+4. `npm run corpus:embed` embeds every chunk with all-MiniLM-L6-v2 and upserts into Supabase (`SUPABASE_SERVICE_ROLE_KEY` required; resumable).
 
 Cite PMC-Patients if you use the data: Zhao et al., *Scientific Data* 10, 909 (2023).
 
@@ -48,21 +48,21 @@ npm run eval                     # terminal 2: all 20 cases in evaluation/testCa
 npx tsx evaluation/runEval.ts --case=TC001 --verbose   # single case with transcript
 ```
 
-Metrics are printed by `evaluation/runEval.ts`: Top-1 (expected string appears anywhere in the assessment text, case-insensitive), Top-3 (expected string appears in one of the three parsed differential names), Test Mentioned, Format OK, retrieval relevance, latency. Run logs are written to `evaluation/results/` (git-ignored).
+Metrics are printed by `evaluation/runEval.ts`: Top-1 as the script labels it (expected string appears anywhere in the assessment text, case-insensitive), Top-3 (expected string appears in one of the three parsed differential names), Test Mentioned, Format OK, retrieval relevance, latency. Run logs are written to `evaluation/results/` (git-ignored). Note that the script's "Top-1" is a whole-text check (95% in our run). The paper's Top-1 is the first listed differential, which was 85%, and that is the headline figure.
 
-**Expected cost and runtime (estimate):** the logged run took ~15.5 minutes wall-clock (20 cases, ~46 s/case, 120 measured Claude calls, mean 5.5 s per call) because cases run sequentially. Token usage was not logged; assuming ~10k input and ~2k output tokens per case at Sonnet-class pricing this is on the order of **$1–2 per 20-case run**. Treat that as an estimate, not a measurement. BioNER and Supabase usage fit free tiers. Runs are not deterministic (temperature 0.3).
+**Expected cost and runtime (estimate):** the logged run took ~15.5 minutes wall-clock (20 cases, ~46 s/case, 120 measured Claude calls, mean 5.5 s per call) because cases run sequentially. Token usage was not logged; assuming ~10k input and ~2k output tokens per case at Sonnet-class pricing this is on the order of **$1–2 per 20-case run**. This is an estimate and was not measured. BioNER and Supabase usage fit free tiers. Runs are not deterministic (temperature 0.3).
 
 ## Known limitations
 
-These are stated plainly from what the code and logs show; reconcile with Section VII of the paper.
+These come from what the code and logs show.
 
-- **Scripted, synthetic test set.** 20 author-written cases, one per disease (two sepsis), five scripted clinician turns each. Not real patients; not independent of the system's design.
+- **Scripted, synthetic test set.** 20 author-written cases, one per disease (two sepsis), five scripted clinician turns each. These are not real patients, and the cases were not written independently of the system's design.
 - **Retrieval adds little measurable value so far.** Retrieved cases were exact-match relevant in only 3 of 60 slots in the last run, and many corpus records have an empty or noisy regex-extracted diagnosis field. There is no no-retrieval ablation in this repo yet.
-- **Corpus is a biased sample.** It is the first ~3,000 keyword-matching records in file order, not a random or stratified sample.
+- **Corpus is a biased sample.** It is the first ~3,000 keyword-matching records in file order, with no random or stratified sampling.
 - **Possible label leakage.** In four cases (TC001, TC003, TC004, TC008) the scripted history itself names the target disease (e.g. "no prior malaria", "unvaccinated for yellow fever"); BioNER's "Conditions" slot feeds the retrieval query.
 - **Weak negation and entity handling.** Negation is a 45-character window regex; BioNER fragments some terms and the exposure-context slot admits noise words.
 - **Latency.** End-to-end case time is ~46 s; the reported generation latency covers only the Claude API call, not BioNER, retrieval, STT, or TTS.
-- **Voice path** was verified only with unit-level tests of reconnect/sentence logic, not with real microphone/network trials; the browser Deepgram key is exposed client-side by design of this prototype.
+- **Voice path.** It was checked with unit-level tests of the reconnect and sentence logic, plus the author's own end-to-end trials with a real microphone and network. It has not been tested with other users or devices. The browser Deepgram key is exposed client-side in this prototype.
 - **Single model, single run.** No confidence intervals, no repeated runs, no comparison against other LLMs or clinicians.
 
 ## License
